@@ -1,0 +1,29 @@
+<html>
+<head>
+<link rel="stylesheet" href="main.css" />
+</head>
+<body>
+    <span id="wrapper">
+        <div id="greeting">
+            <h1>What is your position?</h1>
+        </div>
+        <form method="POST" action="map.php">
+            lat: <input type="numeric" id="lat" name="lat" placeholder="latitude: 50.666" required >
+            lon: <input type="numeric" id="lon" name="lon" placeholder="longitude: 6.666" required >
+            radius: <input type="numeric" id="dist" name="dist" value="10" required> km
+            <br/>
+            <button type="submit" >I want ice cream!</button>
+        </form>
+    </span>
+<script src="js/geoPosition.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+function geoSuccess(p){
+document.getElementById('lat').value = p.coords.latitude;
+document.getElementById('lon').value = p.coords.longitude;
+}
+if (geoPosition.init()) {
+  geoPosition.getCurrentPosition(geoSuccess, null);
+}
+</script>
+</body>
+</html>
