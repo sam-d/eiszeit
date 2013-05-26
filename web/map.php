@@ -48,7 +48,7 @@ print <<<END
     L.marker([data.user.lat, data.user.lon]).addTo(map)
 
     if(data.success != true){
-        document.getElementById('msg').innerHTML = "No ice cream in a radius of "+data.user.dist+" km around you";
+        document.getElementById('msg').innerHTML = "No ice cream in a radius of "+data.user.dist+" km around you. Did you check your freezer?";
     }else{
         var table ="<table>";
         table = table+"<thead><tr><th>Name</th><th>Entfernung (km)</th></tr></tbody>"
