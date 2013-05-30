@@ -1,20 +1,27 @@
 <html>
 <head>
+<meta charset="UTF-8">
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.css" />
  <!--[if lte IE 8]>
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.ie.css" />
 <![endif]-->
+<link rel="stylesheet" href="main.css" />
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
 <script src="http://cdn.leafletjs.com/leaflet-0.5/leaflet.js"></script>
 <script src="js/geoPosition.js" type="text/javascript" charset="utf-8"></script>
-<style type="text/css">
-#map { height: 400px; }
-</style> 
 </head>
 <body>
 
+<div id="msg">
+    <form>
+        Breite: <input type="numeric" id="lat" name="lat" placeholder="latitude: 50.666" required >
+        Länge: <input type="numeric" id="lon" name="lon" placeholder="longitude: 6.666" required >
+        Radius: <input type="numeric" id="dist" name="dist" value="10" required> km
+        <br/>
+        <button type="button" id="geoButton">Finde mein Eis!</button>
+    </form>
+</div>
 <div id="map"></div>
-<div id="msg"></div>
 
 <script type="text/javascript"> 
 var positionObject = (function(){
@@ -47,15 +54,20 @@ var positionObject = (function(){
     }
 
     function noGeolocation(){
-        //TODO: ask user for its position
-        console.log("geo error");
+        $('#msg').toggle();
+    }
+    
+    function geoSuccess(){
+        latitude=p.coords.latitude;
+        longitude=p.coords.longitude;
+        hasRecentPosition = true;
+        setLocalStorage();
+        update('geo');
     }
 
     function geoLocate(){
         if (geoPosition.init()) {
-            geoPosition.getCurrentPosition(function(p){latitude=p.coords.latitude;longitude=p.coords.longitude;hasRecentPosition = true;console.log('geo sucess'+p.coords.longitude+' '+p.coords.latitude);update('geo');},
-            noGeolocation);
-            setLocalStorage();
+            geoPosition.getCurrentPosition(geoSuccess, noGeolocation);
         }
     }
 
@@ -81,6 +93,78 @@ var positionObject = (function(){
     };
 })();
 
+var iceMarker = (function(){
+
+    var markerList = [];
+
+    var icon = L.icon({
+        iconUrl: 'icon.png',
+        //shadowUrl: 'leaf-shadow.png',
+        iconSize:     [48, 48], // size of the icon
+        shadowSize:   [0, 0], // size of the shadow
+        iconAnchor:   [24, 48], // point of the icon which will correspond to marker's location
+        shadowAnchor: [24, 48],  // the same for the shadow
+        popupAnchor:  [0, -48] // point from which the popup should open relative to the iconAnchor
+    });
+
+    function addMarker(lat,lon,name){
+         markerList.push(L.marker([lat,lon],{icon:icon}).bindPopup(name));
+    }
+
+    function addAllMarker(data){
+        if(data === undefined){
+            return;
+        }
+        for(var i=0; i < data.results.length; i++){
+            var obj = data.results[i];
+            console.log(obj);
+            addMarker(obj.lat,obj.lon,obj.name);
+        }
+    }
+
+    function displayMarker(i){
+        markerList[i].addTo(map);
+    }
+
+    function displayAllMarker(){
+        for(var i=0; i< markerList.length; i++){
+            displayMarker(i);
+        }
+    }
+
+    function popMarker(i){
+        markerList[i].openPopup();
+    }
+
+    function popAllMarker(){
+        for(var i=0; i< markerList.length; i++){
+            markerList[i].openPopup();
+        }
+    }
+
+    function removeMarker(i){
+        map.removeLayer(markerList[i]);
+    }
+
+    function removeAllMarker(){
+        for(var i=0; i< markerList.length; i++){
+            removeMarker(i);
+        }
+        markerList = [];
+    }
+
+    return {
+        displayMarker:displayMarker,
+        displayAllMarker:displayAllMarker,
+        removeMarker:removeMarker,  
+        removeAllMarker:removeAllMarker,  
+        popMarker:popMarker,  
+        popAllMarker:popAllMarker,  
+        addMarker: addMarker,
+        addAllMarker: addAllMarker
+    };
+
+})();
 function getData(lat, lon){
     //TODO better way to set data varible
     $.post("http://playground.sam-d.com/ice/query.php",{"lat":lat,"lon":lon,"dist":2},
@@ -98,21 +182,22 @@ function update(from){
         getData(positionObject.lat, positionObject.lon);
     }
     //update representation
-    setIceMarker(data);
+    iceMarker.removeAllMarker();
+    iceMarker.addAllMarker(data);
+    iceMarker.displayAllMarker();
 }
-//get user position and bind event handler
+//get user position 
+$('#geoButton').click(function(){
+    
+    positionObject.lat = $('#lat').val();
+    positionObject.lon = $('#lon').val();
+
+    update('geo');
+    
+    $('#msg').toggle();
+});
 positionObject.getPosition();
 
-//define icon for marker
-var popsicle = L.icon({
-    iconUrl: 'icon.png',
-    //shadowUrl: 'leaf-shadow.png',
-    iconSize:     [48, 48], // size of the icon
-    shadowSize:   [0, 0], // size of the shadow
-    iconAnchor:   [24, 48], // point of the icon which will correspond to marker's location
-    shadowAnchor: [24, 48],  // the same for the shadow
-    popupAnchor:  [0, -48] // point from which the popup should open relative to the iconAnchor
-});
 // create map
 var map = L.map('map').setView([positionObject.lat, positionObject.lon], 13);
 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -122,22 +207,6 @@ var userMarker = L.marker([positionObject.lat, positionObject.lon]).addTo(map)
 //get data from DB
 var data = undefined;
 getData(positionObject.lat, positionObject.lon);
-
-function setIceMarker(data){
-    if(data === undefined){
-        return;
-    }
-    for(var i=0; i < data.results.length; i++){
-        var obj = data.results[i];
-        var mark = L.marker([obj.lat,obj.lon],{icon:popsicle}).addTo(map).bindPopup(obj.name);
-        if( i == 0){
-            mark.openPopup();
-        }
-    }
-}
-
-//set markers at targets
-setIceMarker(data);
 </script>
 
 </body>
