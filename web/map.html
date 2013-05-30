@@ -48,11 +48,12 @@ var positionObject = (function(){
 
     function noGeolocation(){
         //TODO: ask user for its position
+        console.log("geo error");
     }
 
     function geoLocate(){
         if (geoPosition.init()) {
-            geoPosition.getCurrentPosition(function(p){latitude=p.coords.latitude;longitude=p.coords.longitude;hasRecentPosition = true;console.log('geo sucess'+p.coords.longitude+' '+p.coords.latitude);},
+            geoPosition.getCurrentPosition(function(p){latitude=p.coords.latitude;longitude=p.coords.longitude;hasRecentPosition = true;console.log('geo sucess'+p.coords.longitude+' '+p.coords.latitude);update('geo');},
             noGeolocation);
             setLocalStorage();
         }
@@ -70,7 +71,6 @@ var positionObject = (function(){
         }else{
             geoLocate();
             console.log('geo');
-            $('window').trigger('positionUpdate','geo')
         }
     }
 
@@ -82,6 +82,7 @@ var positionObject = (function(){
 })();
 
 function getData(lat, lon){
+    //TODO better way to set data varible
     $.post("http://playground.sam-d.com/ice/query.php",{"lat":lat,"lon":lon,"dist":2},
             null,'json').done(function(data){window.data=data;update("ajax");});
 }
@@ -101,8 +102,6 @@ function update(from){
 }
 //get user position and bind event handler
 positionObject.getPosition();
-$('window').on('positionUpdate',update);
-
 
 //define icon for marker
 var popsicle = L.icon({
