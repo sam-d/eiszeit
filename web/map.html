@@ -111,8 +111,8 @@ var iceMarker = (function(){
         popupAnchor:  [0, -48] // point from which the popup should open relative to the iconAnchor
     });
 
-    function addMarker(lat,lon,name){
-         markerList.push(L.marker([lat,lon],{icon:icon}).bindPopup(name));
+    function addMarker(lat,lon,name,props){
+         markerList.push(L.marker([lat,lon],{icon:icon,data:props}).bindPopup(name).on('click',displayInfo));
     }
 
     function addAllMarker(data){
@@ -121,8 +121,7 @@ var iceMarker = (function(){
         }
         for(var i=0; i < data.results.length; i++){
             var obj = data.results[i];
-            console.log(obj);
-            addMarker(obj.lat,obj.lon,obj.name);
+            addMarker(obj.lat,obj.lon,obj.name,obj);
         }
     }
 
@@ -157,6 +156,13 @@ var iceMarker = (function(){
         markerList = [];
     }
 
+    //not exported: click function
+    function displayInfo(e){
+        var info = e.target.options.data;
+        $('#pane-content').html(info.format());
+        $('#pane-content').toggle($('#pane-content').css('display') == "none");
+    }
+
     return {
         displayMarker:displayMarker,
         displayAllMarker:displayAllMarker,
@@ -172,7 +178,17 @@ var iceMarker = (function(){
 function getData(lat, lon){
     //TODO better way to set data varible
     $.post("http://playground.sam-d.com/ice/query.php",{"lat":lat,"lon":lon,"dist":2},
-            null,'json').done(function(data){window.data=data;update("ajax");});
+            null,'json').done(function(data){
+            for(var i=0; i < data.results.length; i++){
+                data.results[i].format = function(){
+                    var text =
+                    "<h1>"+this.name+"</h1>"+"<h2>"+Number(this.distance).toFixed(4)+"</h2>";
+                    return(text);
+                    }
+            }
+            window.data=data;
+            update("ajax");
+            });
 }
 
 function update(from){
