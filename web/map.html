@@ -24,7 +24,7 @@
 <div id="map"></div>
 <aside id="sidepanel">
 <button type="button" id="togglePane">&lt;</button>
-<div id="pane-content"></div>
+<div id="pane-content">Klicke auf ein Stieleis, um Informationen zu der Eisdiele zu bekommen</div>
 </aside>
 
 <script type="text/javascript"> 
@@ -160,7 +160,9 @@ var iceMarker = (function(){
     function displayInfo(e){
         var info = e.target.options.data;
         $('#pane-content').html(info.format());
-        $('#pane-content').toggle($('#pane-content').css('display') == "none");
+        if($('#pane-content').css("display") == "none"){
+            $('#togglePane').click();
+        }
     }
 
     return {
@@ -176,7 +178,7 @@ var iceMarker = (function(){
 
 })();
 function getData(lat, lon){
-    //TODO better way to set data varible
+    //TODO better way to set data variable and set the format function
     $.post("http://playground.sam-d.com/ice/query.php",{"lat":lat,"lon":lon,"dist":2},
             null,'json').done(function(data){
             for(var i=0; i < data.results.length; i++){
@@ -218,6 +220,11 @@ $('#geoButton').click(function(){
 });
 positionObject.getPosition();
 
+$('#togglePane').click(function(){
+        $('#pane-content').toggle(200,function(){
+        $('#togglePane').html($('#togglePane').html() == "&lt;" ? "&gt;" : "&lt;")});
+    
+});
 // create map
 var map = L.map('map').setView([positionObject.lat, positionObject.lon], 13);
 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
