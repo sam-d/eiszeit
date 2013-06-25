@@ -18,7 +18,9 @@ form {
     width: 5ex;
 }
 #map { 
-    height: 400px; 
+    height: 100%;
+    width: 100%;
+    float: left;
 }
 #msg {
     display:none;
@@ -31,4 +33,26 @@ form {
     background: black;
     color: white;
     opacity: 0.8;
+}
+#sidepanel {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    height: 100%;
+}
+
+#togglePane {
+    height:100%;
+    float: left;
+}
+
+#pane-content {
+    display: none;
+    height: 100%;
+    background: white;
+    width: 15em;//TODO set a relative width (e.g 20%)
+}
+
+#pane-content > h1 {
+    margin: 0;
 }
